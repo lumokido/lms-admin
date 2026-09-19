@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { AuthProvider } from '@/context/AuthContext';
 import { LMSProvider } from '@/context/LMSContext';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 
@@ -16,9 +17,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased bg-[#f8fafc] text-slate-900">
-        <LMSProvider>
-          <AdminLayout>{children}</AdminLayout>
-        </LMSProvider>
+        <AuthProvider>
+          <LMSProvider>
+            <AdminLayout>{children}</AdminLayout>
+          </LMSProvider>
+        </AuthProvider>
       </body>
     </html>
   );

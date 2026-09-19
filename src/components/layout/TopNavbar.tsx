@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { useLMS } from '@/context/LMSContext';
+import { useAuth } from '@/context/AuthContext';
+import Link from 'next/link';
 import {
   Search,
   Bell,
@@ -10,6 +12,9 @@ import {
   Video,
   BookOpen,
   ShieldCheck,
+  LogOut,
+  User,
+  ExternalLink,
 } from 'lucide-react';
 import { BlogModal } from '../ui/BlogModal';
 import { VideoModal } from '../ui/VideoModal';
@@ -17,15 +22,18 @@ import { BookModal } from '../ui/BookModal';
 
 export function TopNavbar() {
   const { globalSearch, setGlobalSearch, activities, settings } = useLMS();
+  const { user, logout, isAuthenticated } = useAuth();
+
   const [showNotifications, setShowNotifications] = useState(false);
   const [showCreateMenu, setShowCreateMenu] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [blogModalOpen, setBlogModalOpen] = useState(false);
   const [videoModalOpen, setVideoModalOpen] = useState(false);
   const [bookModalOpen, setBookModalOpen] = useState(false);
 
   return (
     <>
-      <header className="h-16 border-b border-slate-200 bg-white/95 backdrop-blur-md px-6 flex items-center justify-between gap-4 sticky top-0 z-20 shadow-xs">
+      <header className="h-16 shrink-0 border-b border-slate-200 bg-white/95 backdrop-blur-md px-6 flex items-center justify-between gap-4 sticky top-0 z-20 shadow-xs">
         {/* Global Search */}
         <div className="flex-1 max-w-md relative">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -33,19 +41,13 @@ export function TopNavbar() {
             type="text"
             value={globalSearch}
             onChange={(e) => setGlobalSearch(e.target.value)}
-            placeholder="Search blogs, videos, books, topics..."
+            placeholder="Search blogs, articles, topics..."
             className="w-full bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 pl-9 pr-4 py-1.5 rounded-xl text-xs text-slate-800 placeholder:text-slate-400 outline-none transition-all"
           />
         </div>
 
         {/* Right Controls */}
         <div className="flex items-center gap-3">
-          {/* Institution badge */}
-          <div className="hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-50 border border-sky-200 text-[11px] text-sky-800">
-            <ShieldCheck className="w-3.5 h-3.5 text-sky-600" />
-            <span className="font-semibold">{settings.organizationName}</span>
-          </div>
-
           {/* Quick Create Dropdown */}
           <div className="relative">
             <button
@@ -135,6 +137,66 @@ export function TopNavbar() {
               </>
             )}
           </div>
+
+          {/* Admin User Profile & Sign Out */}
+          {isAuthenticated && user && (
+            <div className="relative pl-2 border-l border-slate-200">
+              <button
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                className="flex items-center gap-2.5 p-1 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer group"
+              >
+                <img
+                  src={
+                    user.avatar ||
+                    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+                  }
+                  alt={user.name}
+                  className="w-8 h-8 rounded-full object-cover ring-2 ring-sky-500/20 group-hover:ring-sky-500/40"
+                />
+                <div className="text-left hidden md:block">
+                  <div className="text-xs font-bold text-slate-800 line-clamp-1">{user.name}</div>
+                  <div className="text-[10px] font-semibold text-sky-600 uppercase tracking-wider">
+                    {user.role}
+                  </div>
+                </div>
+              </button>
+
+              {showProfileMenu && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowProfileMenu(false)}
+                  />
+                  <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white border border-slate-200 shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95">
+                    <div className="p-2.5 border-b border-slate-100 mb-1">
+                      <p className="text-xs font-bold text-slate-800">{user.name}</p>
+                      <p className="text-[11px] text-slate-500 truncate">{user.email}</p>
+                    </div>
+
+                    <Link
+                      href="/blogs"
+                      onClick={() => setShowProfileMenu(false)}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-700 hover:bg-sky-50 hover:text-sky-700 transition-colors"
+                    >
+                      <Newspaper className="w-4 h-4 text-sky-600" />
+                      <span>Manage Articles</span>
+                    </Link>
+
+                    <button
+                      onClick={() => {
+                        setShowProfileMenu(false);
+                        logout();
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer mt-1"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </header>
 
