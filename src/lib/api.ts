@@ -39,6 +39,53 @@ export interface CommentItem {
   createdAt: string;
 }
 
+export interface BookItem {
+  id: string;
+  title: string;
+  subtitle?: string;
+  author: string;
+  category: string;
+  subject?: string;
+  course?: string;
+  price: number;
+  discountPrice?: number;
+  format: 'PDF' | 'EPUB';
+  pages: number;
+  language?: string;
+  fileSize: string;
+  r2StorageKey: string;
+  coverImage?: string;
+  description: string;
+  publicationInfo?: string;
+  previewSettings?: {
+    allowPreview?: boolean;
+    previewPagesCount?: number;
+  };
+  status: 'published' | 'draft';
+  purchasesDisabled?: boolean;
+  downloads: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PurchaseItem {
+  id: string;
+  orderId: string;
+  userId?: string;
+  userEmail: string;
+  userName?: string;
+  bookId: string;
+  bookTitle: string;
+  bookAuthor?: string;
+  bookCover?: string;
+  amount: number;
+  paymentId: string;
+  paymentStatus: 'SUCCESS' | 'PENDING' | 'FAILED' | 'REFUNDED';
+  accessStatus: 'ACTIVE' | 'REVOKED' | 'EXPIRED';
+  purchasedAt: string;
+  updatedAt: string;
+}
+
 export function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null;
   return localStorage.getItem('lumokido_admin_token');
@@ -59,6 +106,10 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   };
+
+  if (options.body instanceof FormData) {
+    delete headers['Content-Type'];
+  }
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -155,6 +206,92 @@ export const api = {
     delete: async (blogId: string, commentId: string): Promise<{ success: boolean; message: string }> => {
       return request(`/blogs/${blogId}/comments/${commentId}`, {
         method: 'DELETE',
+      });
+    },
+  },
+
+  // Books & Cloudflare R2 Document Management
+  books: {
+    getAll: async (params?: { status?: string; category?: string; search?: string }): Promise<BookItem[]> => {
+      const searchParams = new URLSearchParams();
+      if (params?.status) searchParams.append('status', params.status);
+      if (params?.category) searchParams.append('category', params.category);
+      if (params?.search) searchParams.append('search', params.search);
+      const qs = searchParams.toString() ? `?${searchParams.toString()}` : '';
+      return request(`/books${qs}`);
+    },
+
+    getById: async (id: string): Promise<BookItem> => {
+      return request(`/books/${id}`);
+    },
+
+    uploadDocument: async (file: File): Promise<{ r2StorageKey: string; fileSize: string; format: 'PDF' | 'EPUB' }> => {
+      const formData = new FormData();
+      formData.append('file', file);
+      return request('/books/upload-document', {
+        method: 'POST',
+        body: formData,
+      });
+    },
+
+    uploadCover: async (file: File): Promise<{ coverUrl: string; r2Key: string }> => {
+      const formData = new FormData();
+      formData.append('cover', file);
+      return request('/books/upload-cover', {
+        method: 'POST',
+        body: formData,
+      });
+    },
+
+    create: async (data: Partial<BookItem>): Promise<BookItem> => {
+      return request('/books', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+
+    update: async (id: string, data: Partial<BookItem>): Promise<BookItem> => {
+      return request(`/books/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      });
+    },
+
+    toggleStatus: async (id: string): Promise<BookItem> => {
+      return request(`/books/${id}/toggle-status`, {
+        method: 'PATCH',
+      });
+    },
+
+    delete: async (id: string): Promise<{ success: boolean; message: string }> => {
+      return request(`/books/${id}`, {
+        method: 'DELETE',
+      });
+    },
+  },
+
+  // Purchases & Entitlements Management
+  purchases: {
+    getAll: async (params?: { bookId?: string; status?: string; search?: string }): Promise<PurchaseItem[]> => {
+      const searchParams = new URLSearchParams();
+      if (params?.bookId) searchParams.append('bookId', params.bookId);
+      if (params?.status) searchParams.append('status', params.status);
+      if (params?.search) searchParams.append('search', params.search);
+      const qs = searchParams.toString() ? `?${searchParams.toString()}` : '';
+      return request(`/admin/purchases${qs}`);
+    },
+
+    getById: async (id: string): Promise<PurchaseItem> => {
+      return request(`/admin/purchases/${id}`);
+    },
+
+    updateAccess: async (
+      id: string,
+      accessStatus: 'ACTIVE' | 'REVOKED',
+    ): Promise<PurchaseItem> => {
+      return request(`/admin/purchases/${id}/access`, {
+        method: 'PATCH',
+        body: JSON.stringify({ accessStatus }),
       });
     },
   },
