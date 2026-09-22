@@ -459,6 +459,29 @@ export default function BooksPage() {
       {/* TAB 2: PURCHASES & ENTITLEMENTS MANAGEMENT */}
       {activeTab === 'purchases' && (
         <div className="space-y-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Orders</p>
+              <p className="mt-1 text-2xl font-extrabold text-slate-900">{purchases.length}</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Paid</p>
+              <p className="mt-1 text-2xl font-extrabold text-slate-900">
+                {purchases.filter((purchase) => purchase.paymentStatus === 'SUCCESS').length}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Refunded</p>
+              <p className="mt-1 text-2xl font-extrabold text-slate-900">
+                {purchases.filter((purchase) => purchase.paymentStatus === 'REFUNDED').length}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Revenue</p>
+              <p className="mt-1 text-2xl font-extrabold text-slate-900">₹{totalRevenue.toLocaleString('en-IN')}</p>
+              <p className="text-[11px] text-slate-500">Paid orders only</p>
+            </div>
+          </div>
           {/* Purchase Filters Bar */}
           <div className="glass-panel p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto">

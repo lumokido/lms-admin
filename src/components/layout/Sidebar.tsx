@@ -1,14 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLMS } from '@/context/LMSContext';
+import { api } from '@/lib/api';
 import {
   LayoutDashboard,
   Newspaper,
   Video,
   BookOpen,
+  Users,
   GraduationCap,
   Tv,
   UserCheck,
@@ -23,15 +25,31 @@ import {
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { blogs, videos, books } = useLMS();
+  const { blogs, videos } = useLMS();
   const [collapsed, setCollapsed] = useState(false);
+  const [bookCount, setBookCount] = useState<number | null>(null);
+  const [studentCount, setStudentCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    api.overview
+      .get()
+      .then((data) => {
+        setBookCount(data.books);
+        setStudentCount(data.students);
+      })
+      .catch(() => {
+        setBookCount(null);
+        setStudentCount(null);
+      });
+  }, [pathname]);
 
   // Active Modules
   const activeNavItems = [
     { label: 'Overview', href: '/', icon: LayoutDashboard },
     { label: 'Blogs', href: '/blogs', icon: Newspaper, count: blogs.length },
     { label: 'Videos', href: '/videos', icon: Video, count: videos.length },
-    { label: 'Books', href: '/books', icon: BookOpen, count: books.length },
+    { label: 'Books', href: '/books', icon: BookOpen, count: bookCount ?? undefined },
+    { label: 'Students', href: '/students', icon: Users, count: studentCount ?? undefined },
   ];
 
   // Coming Soon Modules

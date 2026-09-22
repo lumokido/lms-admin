@@ -86,6 +86,38 @@ export interface PurchaseItem {
   updatedAt: string;
 }
 
+export interface AdminStudentPurchase {
+  title: string;
+  orderId: string;
+  amount: number;
+  paymentStatus: PurchaseItem['paymentStatus'];
+  accessStatus: PurchaseItem['accessStatus'];
+  purchasedAt: string;
+}
+
+export interface AdminStudent {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  purchaseCount: number;
+  spent: number;
+  books: AdminStudentPurchase[];
+}
+
+export interface AdminOverview {
+  books: number;
+  publishedBooks: number;
+  students: number;
+  purchases: number;
+  successfulPurchases: number;
+  refundedPurchases: number;
+  buyers: number;
+  revenue: number;
+  recentPurchases: PurchaseItem[];
+  studentList: AdminStudent[];
+}
+
 export function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null;
   return localStorage.getItem('lumokido_admin_token');
@@ -225,7 +257,7 @@ export const api = {
       return request(`/books/${id}`);
     },
 
-    uploadDocument: async (file: File): Promise<{ r2StorageKey: string; fileSize: string; format: 'PDF' | 'EPUB' }> => {
+    uploadDocument: async (file: File): Promise<{ r2StorageKey: string; fileSize: string; format: 'PDF' | 'EPUB'; pages: number | null }> => {
       const formData = new FormData();
       formData.append('file', file);
       return request('/books/upload-document', {
@@ -294,5 +326,9 @@ export const api = {
         body: JSON.stringify({ accessStatus }),
       });
     },
+  },
+
+  overview: {
+    get: async (): Promise<AdminOverview> => request('/admin/overview'),
   },
 };

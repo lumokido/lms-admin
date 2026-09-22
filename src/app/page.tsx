@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useLMS } from '@/context/LMSContext';
+import { api, AdminOverview } from '@/lib/api';
 import { StatCard } from '@/components/ui/StatCard';
 import { Badge } from '@/components/ui/Badge';
 import { BlogModal } from '@/components/ui/BlogModal';
@@ -12,15 +13,15 @@ import {
   Newspaper,
   Video,
   BookOpen,
-  Eye,
   Plus,
   ArrowUpRight,
   Clock,
   CheckCircle2,
   Calendar,
   Sparkles,
-  TrendingUp,
-  Download,
+  Users,
+  ShoppingBag,
+  IndianRupee,
   GraduationCap,
   Tv,
   UserCheck,
@@ -29,20 +30,28 @@ import {
 } from 'lucide-react';
 
 export default function DashboardPage() {
-  const { blogs, videos, books, activities } = useLMS();
+  const { blogs, videos, activities, showToast } = useLMS();
 
   const [blogModalOpen, setBlogModalOpen] = useState(false);
   const [videoModalOpen, setVideoModalOpen] = useState(false);
   const [bookModalOpen, setBookModalOpen] = useState(false);
+  const [overview, setOverview] = useState<AdminOverview | null>(null);
 
-  // Aggregates
+  useEffect(() => {
+    api.overview
+      .get()
+      .then(setOverview)
+      .catch((err: Error) => {
+        showToast({
+          type: 'error',
+          title: 'Live totals unavailable',
+          message: err.message || 'Could not load books, students, and revenue.',
+        });
+      });
+  }, [showToast, bookModalOpen]);
+
   const publishedBlogs = blogs.filter((b) => b.status === 'published');
   const publishedVideos = videos.filter((v) => v.status === 'published');
-  const publishedBooks = books.filter((bk) => bk.status === 'published');
-
-  const totalArticleViews = blogs.reduce((acc, b) => acc + b.views, 0);
-  const totalVideoViews = videos.reduce((acc, v) => acc + v.views, 0);
-  const totalBookDownloads = books.reduce((acc, bk) => acc + bk.downloads, 0);
 
   const comingSoonItems = [
     { name: 'Teachers', href: '/teachers', icon: GraduationCap, desc: 'Faculty directory, workloads & payouts' },
@@ -98,37 +107,117 @@ export default function DashboardPage() {
       {/* Primary KPI StatCards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Published Blogs"
-          value={publishedBlogs.length}
-          change="+3 this month"
-          trend="up"
-          period="articles"
-          icon={Newspaper}
-        />
-        <StatCard
-          title="Video Lessons"
-          value={publishedVideos.length}
-          change="+2 new"
-          trend="up"
-          period="lectures"
-          icon={Video}
-        />
-        <StatCard
-          title="Digital Books"
-          value={publishedBooks.length}
-          change="Study library"
+          title="Books in catalog"
+          value={overview ? overview.books : '—'}
+          change={overview ? `${overview.publishedBooks} published` : 'Loading'}
           trend="neutral"
-          period="resources"
+          period="live catalog"
           icon={BookOpen}
         />
         <StatCard
-          title="Total Resource Views"
-          value={(totalArticleViews + totalVideoViews).toLocaleString()}
-          change="+34%"
-          trend="up"
-          period="learner reads & watches"
-          icon={Eye}
+          title="Students"
+          value={overview ? overview.students : '—'}
+          change={overview ? `${overview.buyers} buyers` : 'Loading'}
+          trend="neutral"
+          period="registered accounts"
+          icon={Users}
         />
+        <StatCard
+          title="Orders"
+          value={overview ? overview.purchases : '—'}
+          change={overview ? `${overview.successfulPurchases} paid` : 'Loading'}
+          trend="neutral"
+          period={overview ? `${overview.refundedPurchases} refunded` : 'all orders'}
+          icon={ShoppingBag}
+        />
+        <StatCard
+          title="Revenue"
+          value={overview ? `₹${overview.revenue.toLocaleString('en-IN')}` : '—'}
+          change="Paid orders only"
+          trend="neutral"
+          period="refunds left out"
+          icon={IndianRupee}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="lg:col-span-3 glass-panel p-6 rounded-2xl bg-white border border-slate-200">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-base font-bold text-slate-900">Recent purchases</h2>
+              <p className="text-xs text-slate-500">Who bought which book, and whether access is active</p>
+            </div>
+            <Link href="/books" className="text-xs font-bold text-sky-600">
+              Open books
+            </Link>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="text-slate-500 border-b border-slate-100">
+                  <th className="py-2 pr-3 font-semibold">Student</th>
+                  <th className="py-2 pr-3 font-semibold">Book</th>
+                  <th className="py-2 pr-3 font-semibold">Amount</th>
+                  <th className="py-2 font-semibold">Access</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(overview?.recentPurchases || []).map((purchase) => (
+                  <tr key={purchase.id} className="border-b border-slate-50">
+                    <td className="py-3 pr-3">
+                      <p className="font-semibold text-slate-900">{purchase.userName || purchase.userEmail}</p>
+                      <p className="text-[11px] text-slate-500">{purchase.userEmail}</p>
+                    </td>
+                    <td className="py-3 pr-3 text-slate-700">{purchase.bookTitle}</td>
+                    <td className="py-3 pr-3 font-semibold">₹{purchase.amount.toLocaleString('en-IN')}</td>
+                    <td className="py-3">
+                      <Badge variant={purchase.paymentStatus === 'SUCCESS' && purchase.accessStatus === 'ACTIVE' ? 'success' : 'neutral'}>
+                        {purchase.paymentStatus} · {purchase.accessStatus}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
+                {overview && overview.recentPurchases.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="py-8 text-center text-slate-400">No purchases yet.</td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="lg:col-span-2 glass-panel p-6 rounded-2xl bg-white border border-slate-200">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-base font-bold text-slate-900">Students</h2>
+              <p className="text-xs text-slate-500">Accounts and the books they paid for</p>
+            </div>
+            <Link href="/students" className="text-xs font-bold text-sky-600">
+              View all
+            </Link>
+          </div>
+          <div className="space-y-3">
+            {(overview?.studentList || []).map((student) => (
+              <div key={student.id} className="rounded-xl border border-slate-100 p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">{student.name}</p>
+                    <p className="text-[11px] text-slate-500">{student.email}</p>
+                  </div>
+                  <p className="text-xs font-bold text-slate-800">₹{student.spent.toLocaleString('en-IN')}</p>
+                </div>
+                <p className="mt-2 text-[11px] text-slate-600">
+                  {student.books.length === 0
+                    ? 'No orders'
+                    : student.books
+                        .map((book) => `${book.title} · ${book.paymentStatus}`)
+                        .join(', ')}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Future Modules Roadmaps Banner */}
