@@ -1,0 +1,57 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "**/*.mts"
+  ],
+  "exclude": [
+    "node_modules",
+    "src/use-form/ButtonController/**/*",
+    "src/use-form/CheckboxController/**/*",
+    "src/use-form/CheckboxGroupController/**/*",
+    "src/use-form/DateController/**/*",
+    "src/use-form/DateTimeController/**/*",
+    "src/use-form/DynamicColumnFieldArray/**/*",
+    "src/use-form/FieldArrayController/**/*",
+    "src/use-form/File2UploadController/**/*",
+    "src/use-form/FileController/**/*",
+    "src/use-form/ImageAndFile/**/*",
+    "src/use-form/ImageController/**/*",
+    "src/use-form/InputAndSelectController/**/*",
+    "src/use-form/InputGroupController/**/*",
+    "src/use-form/MultipleContoller/**/*",
+    "src/use-form/OTPInputController/**/*",
+    "src/use-form/PhoneNumber-Controller/**/*",
+    "src/use-form/RadioType/**/*",
+    "src/use-form/Switch2Controller/**/*",
+    "src/use-form/SwitchController/**/*",
+    "src/use-form/TagsInputController/**/*",
+    "src/use-form/TImeController/**/*"
+  ]
+}
